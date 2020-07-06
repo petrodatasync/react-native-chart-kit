@@ -1,24 +1,5 @@
 # Changelog
 
-## v6.1.0
-
-- added `scrollableInfoTextDecorator`
-
-## v6.0.0
-
-- Typescript rewrite
-
-## v5.6.1
-
-- fixed linear gradient issue due to `react-native-svg` lib update
-- added handling for datasets data is null to use last line coordinates
-- updated to Expo SDK 37 and add clarification on usage to README.md
-
-## v5.6.0
-
-- added `showValuesOnTopOfBars` prop to `BarChart`
-- fixed decimalPlaces being 0 and not applied in `BarChart`
-
 ## v5.5.0
 
 - added `useShadowColorFromDataset` to `chartConfig` to make `LineChart` shadow same as line color

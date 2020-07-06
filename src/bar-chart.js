@@ -1,66 +1,19 @@
 import React from "react";
-import { View, ViewStyle } from "react-native";
-import { G, Rect, Svg, Text } from "react-native-svg";
-
-import AbstractChart, {
-  AbstractChartConfig,
-  AbstractChartProps
-} from "./AbstractChart";
-import { ChartData } from "./HelperTypes";
+import { View } from "react-native";
+import { Svg, Rect, G, Text } from "react-native-svg";
+import AbstractChart from "./abstract-chart";
 
 const barWidth = 32;
 
-export interface BarChartProps extends AbstractChartProps {
-  data: ChartData;
-  width: number;
-  height: number;
-  fromZero?: boolean;
-  withInnerLines?: boolean;
-  yAxisLabel: string;
-  yAxisSuffix: string;
-  chartConfig: AbstractChartConfig;
-  style?: Partial<ViewStyle>;
-  horizontalLabelRotation?: number;
-  verticalLabelRotation?: number;
-  /**
-   * Show vertical labels - default: True.
-   */
-  withVerticalLabels?: boolean;
-  /**
-   * Show horizontal labels - default: True.
-   */
-  withHorizontalLabels?: boolean;
-  /**
-   * The number of horizontal lines
-   */
-  segments?: number;
-  showBarTops?: boolean;
-  showValuesOnTopOfBars?: boolean;
-}
-
-type BarChartState = {};
-
-class BarChart extends AbstractChart<BarChartProps, BarChartState> {
+class BarChart extends AbstractChart {
   getBarPercentage = () => {
     const { barPercentage = 1 } = this.props.chartConfig;
     return barPercentage;
   };
 
-  renderBars = ({
-    data,
-    width,
-    height,
-    paddingTop,
-    paddingRight,
-    barRadius
-  }: Pick<
-    Omit<AbstractChartConfig, "data">,
-    "width" | "height" | "paddingRight" | "paddingTop" | "barRadius"
-  > & {
-    data: number[];
-  }) => {
+  renderBars = config => {
+    const { data, width, height, paddingTop, paddingRight, barRadius } = config;
     const baseHeight = this.calcBaseHeight(data, height);
-
     return data.map((x, i) => {
       const barHeight = this.calcHeight(x, data, height);
       const barWidth = 32 * this.getBarPercentage();
@@ -85,20 +38,9 @@ class BarChart extends AbstractChart<BarChartProps, BarChartState> {
     });
   };
 
-  renderBarTops = ({
-    data,
-    width,
-    height,
-    paddingTop,
-    paddingRight
-  }: Pick<
-    Omit<AbstractChartConfig, "data">,
-    "width" | "height" | "paddingRight" | "paddingTop"
-  > & {
-    data: number[];
-  }) => {
+  renderBarTops = config => {
+    const { data, width, height, paddingTop, paddingRight } = config;
     const baseHeight = this.calcBaseHeight(data, height);
-
     return data.map((x, i) => {
       const barHeight = this.calcHeight(x, data, height);
       const barWidth = 32 * this.getBarPercentage();
@@ -119,20 +61,9 @@ class BarChart extends AbstractChart<BarChartProps, BarChartState> {
     });
   };
 
-  renderValuesOnTopOfBars = ({
-    data,
-    width,
-    height,
-    paddingTop,
-    paddingRight
-  }: Pick<
-    Omit<AbstractChartConfig, "data">,
-    "width" | "height" | "paddingRight" | "paddingTop"
-  > & {
-    data: number[];
-  }) => {
+  renderValuesOnTopOfBars = config => {
+    const { data, width, height, paddingTop, paddingRight } = config;
     const baseHeight = this.calcBaseHeight(data, height);
-
     return data.map((x, i) => {
       const barHeight = this.calcHeight(x, data, height);
       const barWidth = 32 * this.getBarPercentage();
@@ -170,9 +101,7 @@ class BarChart extends AbstractChart<BarChartProps, BarChartState> {
       showValuesOnTopOfBars = false,
       segments = 4
     } = this.props;
-
     const { borderRadius = 0, paddingTop = 16, paddingRight = 64 } = style;
-
     const config = {
       width,
       height,
@@ -193,7 +122,6 @@ class BarChart extends AbstractChart<BarChartProps, BarChartState> {
           return label;
         }
     };
-
     return (
       <View style={style}>
         <Svg height={height} width={width}>
@@ -223,8 +151,8 @@ class BarChart extends AbstractChart<BarChartProps, BarChartState> {
                   ...config,
                   count: segments,
                   data: data.datasets[0].data,
-                  paddingTop: paddingTop as number,
-                  paddingRight: paddingRight as number
+                  paddingTop,
+                  paddingRight
                 })
               : null}
           </G>
@@ -233,8 +161,8 @@ class BarChart extends AbstractChart<BarChartProps, BarChartState> {
               ? this.renderVerticalLabels({
                   ...config,
                   labels: data.labels,
-                  paddingRight: paddingRight as number,
-                  paddingTop: paddingTop as number,
+                  paddingRight,
+                  paddingTop,
                   horizontalOffset: barWidth * this.getBarPercentage()
                 })
               : null}
@@ -243,8 +171,8 @@ class BarChart extends AbstractChart<BarChartProps, BarChartState> {
             {this.renderBars({
               ...config,
               data: data.datasets[0].data,
-              paddingTop: paddingTop as number,
-              paddingRight: paddingRight as number
+              paddingTop,
+              paddingRight
             })}
           </G>
           <G>
@@ -252,8 +180,8 @@ class BarChart extends AbstractChart<BarChartProps, BarChartState> {
               this.renderValuesOnTopOfBars({
                 ...config,
                 data: data.datasets[0].data,
-                paddingTop: paddingTop as number,
-                paddingRight: paddingRight as number
+                paddingTop,
+                paddingRight
               })}
           </G>
           <G>
@@ -261,8 +189,8 @@ class BarChart extends AbstractChart<BarChartProps, BarChartState> {
               this.renderBarTops({
                 ...config,
                 data: data.datasets[0].data,
-                paddingTop: paddingTop as number,
-                paddingRight: paddingRight as number
+                paddingTop,
+                paddingRight
               })}
           </G>
         </Svg>

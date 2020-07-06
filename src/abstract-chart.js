@@ -1,43 +1,9 @@
 import React, { Component } from "react";
-import { Defs, Line, LinearGradient, Stop, Text } from "react-native-svg";
 
-import { ChartConfig, Dataset, PartialBy } from "./HelperTypes";
+import { LinearGradient, Line, Text, Defs, Stop } from "react-native-svg";
 
-export interface AbstractChartProps {
-  fromZero?: boolean;
-  chartConfig?: AbstractChartConfig;
-  yAxisLabel?: string;
-  yAxisSuffix?: string;
-  yLabelsOffset?: number;
-  yAxisInterval?: number;
-  xAxisLabel?: string;
-  xLabelsOffset?: number;
-  hidePointsAtIndex?: number[];
-}
-
-export interface AbstractChartConfig extends ChartConfig {
-  count: number;
-  data: Dataset[];
-  width: number;
-  height: number;
-  paddingTop: number;
-  paddingRight: number;
-  horizontalLabelRotation?: number;
-  formatYLabel?: (yLabel: string) => string;
-  labels?: string[];
-  horizontalOffset?: number;
-  stackedBar?: boolean;
-  verticalLabelRotation?: number;
-  formatXLabel?: (xLabel: string) => string;
-}
-
-export type AbstractChartState = {};
-
-class AbstractChart<
-  IProps extends AbstractChartProps,
-  IState extends AbstractChartState
-> extends Component<AbstractChartProps & IProps, AbstractChartState & IState> {
-  calcScaler = (data: number[]) => {
+class AbstractChart extends Component {
+  calcScaler = data => {
     if (this.props.fromZero) {
       return Math.max(...data, 0) - Math.min(...data, 0) || 1;
     } else {
@@ -45,7 +11,7 @@ class AbstractChart<
     }
   };
 
-  calcBaseHeight = (data: number[], height: number) => {
+  calcBaseHeight = (data, height) => {
     const min = Math.min(...data);
     const max = Math.max(...data);
     if (min >= 0 && max >= 0) {
@@ -57,10 +23,9 @@ class AbstractChart<
     }
   };
 
-  calcHeight = (val: number, data: number[], height: number) => {
+  calcHeight = (val, data, height) => {
     const max = Math.max(...data);
     const min = Math.min(...data);
-
     if (min < 0 && max > 0) {
       return height * (val / this.calcScaler(data));
     } else if (min >= 0 && max >= 0) {
@@ -130,9 +95,7 @@ class AbstractChart<
     );
   };
 
-  renderHorizontalLabels = (
-    config: Omit<AbstractChartConfig, "data"> & { data: number[] }
-  ) => {
+  renderHorizontalLabels = config => {
     const {
       count,
       data,
@@ -141,16 +104,16 @@ class AbstractChart<
       paddingRight,
       horizontalLabelRotation = 0,
       decimalPlaces = 2,
-      formatYLabel = (yLabel: string) => yLabel
+      formatYLabel = yLabel => yLabel
     } = config;
-
     const {
       yAxisLabel = "",
       yAxisSuffix = "",
       yLabelsOffset = 12
     } = this.props;
-    return new Array(count === 1 ? 1 : count + 1).fill(1).map((_, i) => {
-      let yLabel = String(i * count);
+
+    return [...Array(count === 1 ? 1 : count + 1).keys()].map((i, _) => {
+      let yLabel = i * count;
 
       if (count === 1) {
         yLabel = `${yAxisLabel}${formatYLabel(
@@ -158,8 +121,8 @@ class AbstractChart<
         )}${yAxisSuffix}`;
       } else {
         const label = this.props.fromZero
-          ? (this.calcScaler(data) / count) * i + Math.min(...data, 0)
-          : (this.calcScaler(data) / count) * i + Math.min(...data);
+          ? 5000 * i + Math.min(...data, 0)
+          : 5000 * i + Math.min(...data);
         yLabel = `${yAxisLabel}${formatYLabel(
           label.toFixed(decimalPlaces)
         )}${yAxisSuffix}`;
@@ -187,54 +150,38 @@ class AbstractChart<
     });
   };
 
-  renderVerticalLabels = ({
-    labels = [],
-    width,
-    height,
-    paddingRight,
-    paddingTop,
-    horizontalOffset = 0,
-    stackedBar = false,
-    verticalLabelRotation = 0,
-    formatXLabel = xLabel => xLabel
-  }: Pick<
-    AbstractChartConfig,
-    | "labels"
-    | "width"
-    | "height"
-    | "paddingRight"
-    | "paddingTop"
-    | "horizontalOffset"
-    | "stackedBar"
-    | "verticalLabelRotation"
-    | "formatXLabel"
-  >) => {
+  renderVerticalLabels = config => {
+    const {
+      labels = [],
+      width,
+      height,
+      paddingRight,
+      paddingTop,
+      horizontalOffset = 0,
+      stackedBar = false,
+      verticalLabelRotation = 0,
+      formatXLabel = xLabel => xLabel
+    } = config;
     const {
       xAxisLabel = "",
       xLabelsOffset = 0,
       hidePointsAtIndex = []
     } = this.props;
-
     const fontSize = 12;
-
     let fac = 1;
     if (stackedBar) {
       fac = 0.71;
     }
-
     return labels.map((label, i) => {
       if (hidePointsAtIndex.includes(i)) {
         return null;
       }
-
       const x =
         (((width - paddingRight) / labels.length) * i +
           paddingRight +
           horizontalOffset) *
         fac;
-
       const y = (height * 3) / 4 + paddingTop + fontSize * 2 + xLabelsOffset;
-
       return (
         <Text
           origin={`${x}, ${y}`}
@@ -251,21 +198,9 @@ class AbstractChart<
     });
   };
 
-  renderVerticalLines = ({
-    data,
-    width,
-    height,
-    paddingTop,
-    paddingRight
-  }: Omit<
-    Pick<
-      AbstractChartConfig,
-      "data" | "width" | "height" | "paddingRight" | "paddingTop"
-    >,
-    "data"
-  > & { data: number[] }) => {
+  renderVerticalLines = config => {
+    const { data, width, height, paddingTop, paddingRight } = config;
     const { yAxisInterval = 1 } = this.props;
-
     return [...new Array(Math.ceil(data.length / yAxisInterval))].map(
       (_, i) => {
         return (
@@ -288,42 +223,21 @@ class AbstractChart<
     );
   };
 
-  renderVerticalLine = ({
-    height,
-    paddingTop,
-    paddingRight
-  }: Pick<AbstractChartConfig, "height" | "paddingRight" | "paddingTop">) => (
-    <Line
-      key={Math.random()}
-      x1={Math.floor(paddingRight)}
-      y1={0}
-      x2={Math.floor(paddingRight)}
-      y2={height - height / 4 + paddingTop}
-      {...this.getPropsForBackgroundLines()}
-    />
-  );
+  renderVerticalLine = config => {
+    const { height, paddingTop, paddingRight } = config;
+    return (
+      <Line
+        key={Math.random()}
+        x1={Math.floor(paddingRight)}
+        y1={0}
+        x2={Math.floor(paddingRight)}
+        y2={height - height / 4 + paddingTop}
+        {...this.getPropsForBackgroundLines()}
+      />
+    );
+  };
 
-  renderDefs = (
-    config: Pick<
-      PartialBy<
-        AbstractChartConfig,
-        | "backgroundGradientFromOpacity"
-        | "backgroundGradientToOpacity"
-        | "fillShadowGradient"
-        | "fillShadowGradientOpacity"
-      >,
-      | "width"
-      | "height"
-      | "backgroundGradientFrom"
-      | "backgroundGradientTo"
-      | "useShadowColorFromDataset"
-      | "data"
-      | "backgroundGradientFromOpacity"
-      | "backgroundGradientToOpacity"
-      | "fillShadowGradient"
-      | "fillShadowGradientOpacity"
-    >
-  ) => {
+  renderDefs = config => {
     const {
       width,
       height,
@@ -332,7 +246,6 @@ class AbstractChart<
       useShadowColorFromDataset,
       data
     } = config;
-
     const fromOpacity = config.hasOwnProperty("backgroundGradientFromOpacity")
       ? config.backgroundGradientFromOpacity
       : 1.0;
@@ -342,7 +255,7 @@ class AbstractChart<
 
     const fillShadowGradient = config.hasOwnProperty("fillShadowGradient")
       ? config.fillShadowGradient
-      : this.props.chartConfig.color(1.0);
+      : this.props.chartConfig.color();
 
     const fillShadowGradientOpacity = config.hasOwnProperty(
       "fillShadowGradientOpacity"
@@ -354,11 +267,10 @@ class AbstractChart<
       <Defs>
         <LinearGradient
           id="backgroundGradient"
-          x1={0}
+          x1="0"
           y1={height}
           x2={width}
           y2={0}
-          gradientUnits="userSpaceOnUse"
         >
           <Stop
             offset="0"
@@ -371,52 +283,42 @@ class AbstractChart<
             stopOpacity={toOpacity}
           />
         </LinearGradient>
-        {useShadowColorFromDataset ? (
-          data.map((dataset, index) => (
+        {
+          useShadowColorFromDataset ? (
+            data.map((dataset, index) => (
+              <LinearGradient
+                id={`fillShadowGradient_${index}`}
+                key={`${index}`}
+                x1={0}
+                y1={0}
+                x2={0}
+                y2={height}
+              >
+                <Stop
+                  offset="0"
+                  stopColor={dataset.color ? dataset.color() : fillShadowGradient}
+                  stopOpacity={fillShadowGradientOpacity}
+                />
+                <Stop offset="1" stopColor={dataset.color ? dataset.color(fillShadowGradientOpacity) : fillShadowGradient} stopOpacity="0" />
+              </LinearGradient>
+            ))
+          ) : (
             <LinearGradient
-              id={`fillShadowGradient_${index}`}
-              key={`${index}`}
+              id="fillShadowGradient"
               x1={0}
               y1={0}
               x2={0}
               y2={height}
-              gradientUnits="userSpaceOnUse"
             >
               <Stop
                 offset="0"
-                stopColor={
-                  dataset.color ? dataset.color(1.0) : fillShadowGradient
-                }
+                stopColor={fillShadowGradient}
                 stopOpacity={fillShadowGradientOpacity}
               />
-              <Stop
-                offset="1"
-                stopColor={
-                  dataset.color
-                    ? dataset.color(fillShadowGradientOpacity)
-                    : fillShadowGradient
-                }
-                stopOpacity="0"
-              />
+              <Stop offset="1" stopColor={fillShadowGradient} stopOpacity="0" />
             </LinearGradient>
-          ))
-        ) : (
-          <LinearGradient
-            id="fillShadowGradient"
-            x1={0}
-            y1={0}
-            x2={0}
-            y2={height}
-            gradientUnits="userSpaceOnUse"
-          >
-            <Stop
-              offset="0"
-              stopColor={fillShadowGradient}
-              stopOpacity={fillShadowGradientOpacity}
-            />
-            <Stop offset="1" stopColor={fillShadowGradient} stopOpacity="0" />
-          </LinearGradient>
-        )}
+          )
+        }
       </Defs>
     );
   };

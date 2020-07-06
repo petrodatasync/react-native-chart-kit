@@ -1,110 +1,51 @@
 import React from "react";
-import { View, ViewStyle } from "react-native";
-import { G, Rect, Svg, Text } from "react-native-svg";
-
-import AbstractChart, {
-  AbstractChartConfig,
-  AbstractChartProps
-} from "./AbstractChart";
+import { View } from "react-native";
+import { Svg, Rect, G, Text } from "react-native-svg";
+import AbstractChart from "./abstract-chart";
 
 const barWidth = 32;
 
-export interface StackedBarChartData {
-  labels: string[];
-  legend: string[];
-  data: number[][];
-  barColors: string[];
-}
+class StackedBarChart extends AbstractChart {
 
-export interface StackedBarChartProps extends AbstractChartProps {
-  /**
-   * E.g.
-   * ```javascript
-   * const data = {
-   *   labels: ["Test1", "Test2"],
-   *   legend: ["L1", "L2", "L3"],
-   *   data: [[60, 60, 60], [30, 30, 60]],
-   *   barColors: ["#dfe4ea", "#ced6e0", "#a4b0be"]
-   * };
-   * ```
-   */
-  data: StackedBarChartData;
-  width: number;
-  height: number;
-  chartConfig: AbstractChartConfig;
-  hideLegend: boolean;
-  style?: Partial<ViewStyle>;
-  barPercentage?: number;
-  decimalPlaces?: number;
-  /**
-   * Show vertical labels - default: True.
-   */
-  withVerticalLabels?: boolean;
-  /**
-   * Show horizontal labels - default: True.
-   */
-  withHorizontalLabels?: boolean;
-  /**
-   * The number of horizontal lines
-   */
-  segments?: number;
-}
-
-type StackedBarChartState = {};
-
-class StackedBarChart extends AbstractChart<
-  StackedBarChartProps,
-  StackedBarChartState
-> {
   getBarPercentage = () => {
     const { barPercentage = 1 } = this.props.chartConfig;
     return barPercentage;
   };
 
-  getBarRadius = (ret: string | any[], x: string | any[]) => {
+  getBarRadius = (ret, x) => {
     return this.props.chartConfig.barRadius && ret.length === x.length - 1
       ? this.props.chartConfig.barRadius
       : 0;
   };
 
-  renderBars = ({
-    data,
-    width,
-    height,
-    paddingTop,
-    paddingRight,
-    border,
-    colors,
-    stackedBar = false
-  }: Pick<
-    Omit<AbstractChartConfig, "data">,
-    "width" | "height" | "paddingRight" | "paddingTop" | "stackedBar"
-  > & {
-    border: number;
-    colors: string[];
-    data: number[][];
-  }) =>
-    data.map((x, i) => {
+  renderBars = config => {
+    const {
+      data,
+      width,
+      height,
+      paddingTop,
+      paddingRight,
+      border,
+      colors,
+      stackedBar = false
+    } = config;
+    return data.map((x, i) => {
       const barWidth = 32 * this.getBarPercentage();
       const ret = [];
       let h = 0;
       let st = paddingTop;
-
       let fac = 1;
-      if (stackedBar) {
-        fac = 0.7;
+      if(stackedBar) {
+        fac = .7;
       }
-
       for (let z = 0; z < x.length; z++) {
         h = (height - 55) * (x[z] / border);
-
         const y = (height / 4) * 3 - h + st;
         const xC =
           (paddingRight +
             (i * (width - paddingRight)) / data.length +
             barWidth / 2) *
-          fac;
-
+            fac;
         ret.push(
           <Rect
             key={Math.random()}
@@ -117,7 +58,6 @@ class StackedBarChart extends AbstractChart<
             fill={colors[z]}
           />
         );
-
         if (!this.props.hideLegend) {
           ret.push(
             <Text
@@ -137,17 +77,11 @@ class StackedBarChart extends AbstractChart<
 
       return ret;
     });
+  };
 
-  renderLegend = ({
-    legend,
-    colors,
-    width,
-    height
-  }: Pick<AbstractChartConfig, "width" | "height"> & {
-    legend: string[];
-    colors: string[];
-  }) =>
-    legend.map((x, i) => {
+  renderLegend = config => {
+    const { legend, colors, width, height } = config;
+    return legend.map((x, i) => {
       return (
         <G key={Math.random()}>
           <Rect
@@ -169,11 +103,11 @@ class StackedBarChart extends AbstractChart<
         </G>
       );
     });
+  };
 
   render() {
     const paddingTop = 15;
     const paddingRight = 50;
-
     const {
       width,
       height,
@@ -184,13 +118,11 @@ class StackedBarChart extends AbstractChart<
       segments = 4,
       decimalPlaces
     } = this.props;
-
     const { borderRadius = 0 } = style;
     const config = {
       width,
       height
     };
-
     let border = 0;
     for (let i = 0; i < data.data.length; i++) {
       const actual = data.data[i].reduce((pv, cv) => pv + cv, 0);
@@ -198,9 +130,7 @@ class StackedBarChart extends AbstractChart<
         border = actual;
       }
     }
-
     var stackedBar = data.legend && data.legend.length == 0 ? false : true;
-
     return (
       <View style={style}>
         <Svg height={height} width={width}>
@@ -254,20 +184,17 @@ class StackedBarChart extends AbstractChart<
               colors: this.props.data.barColors,
               paddingTop,
               paddingRight: paddingRight + 20,
-              stackedBar
+              stackedBar,
             })}
           </G>
-          {data.legend &&
-            data.legend.length != 0 &&
-            this.renderLegend({
-              ...config,
-              legend: data.legend,
-              colors: this.props.data.barColors
-            })}
+          {data.legend && data.legend.length != 0 && this.renderLegend({
+            ...config,
+            legend: data.legend,
+            colors: this.props.data.barColors
+          })}
         </Svg>
       </View>
     );
   }
 }
-
 export default StackedBarChart;
